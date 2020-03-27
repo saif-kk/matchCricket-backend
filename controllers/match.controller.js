@@ -63,6 +63,7 @@ var matchController = (function (){
             }
            
             return teamModel.find(param)
+            .populate('country')
             .then( function (teams) {
                 return teams;
             })
@@ -154,7 +155,7 @@ var matchController = (function (){
         },
 
         updateMatchesScore: function (id, matchUObj){
-            return matchModel.findOne({'_id' : id, 'isCompleted' : 0})
+            return matchModel.findOne({'_id' : id, 'isCompleted' : { $ne: 1 }})
             .then(function (data){
                 if(!data) throw new CustomError ('No matches found for this Id');
                 if(matchUObj.team1.playing == matchUObj.team2.playing) throw new CustomError ('error have set the same inings for noth team');
@@ -165,7 +166,8 @@ var matchController = (function (){
                     "team1.players":  matchUObj.team1.players,
                     "team2.playing": matchUObj.team2.playing,
                     "team2.score": matchUObj.team2.score,
-                    "team2.players":  matchUObj.team2.players
+                    "team2.players":  matchUObj.team2.players,
+                    "isCompleted": 2,
                 }
                 return  matchModel.findOneAndUpdate({ _id: id },{$set: matchData}, { new: true })
             }).then( function (result){
@@ -179,6 +181,15 @@ var matchController = (function (){
             else param = {}
 
             return matchModel.find(param)
+            .populate({
+                path: 'team1.team',
+                select: 'teamName teamRank'
+            })
+            .populate({
+                path: 'team2.team',
+                select: 'teamName teamRank'
+            })
+            .populate('venue')
             .then( function (result){
                 return result
             })
